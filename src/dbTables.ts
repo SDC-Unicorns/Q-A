@@ -1,52 +1,59 @@
 import db from './database'
+//Bug in here that makes you have to run the file multiple times to make all of the tables
+//Making questions table too slow, (async) and answers isn't created yet
 
 db.none(`CREATE TABLE IF NOT EXISTS questions
-(questions_id SERIAL,
+(id SERIAL,
+product_id INT,
+body TEXT,
+date_written TEXT,
 asker_name TEXT,
-load_answers TEXT,
-question_body TEXT,
-question_date TIMESTAMP,
-question_helpfulness INT,
+asker_email TEXT,
 reported BOOLEAN,
-PRIMARY KEY (questions_id)
+helpful INT,
+PRIMARY KEY (id)
 );
 `)
   .then(() => {
     console.log("Table 'questions' has been created successfully.");
+    db.none(`CREATE TABLE IF NOT EXISTS answers
+            (id SERIAL,
+              question_id INT,
+              body TEXT,
+              date_written TEXT,
+              answerer_name TEXT,
+              answerer_email TEXT,
+              reported BOOLEAN,
+              helpful INT,
+              PRIMARY KEY(id),
+              FOREIGN KEY (question_id) REFERENCES questions (id)
+              );
+    `)
+      .then(() => {
+        console.log("Table 'answers' has been created successfully.");
+        db.none(`
+                CREATE TABLE IF NOT EXISTS photos
+                (id SERIAL,
+                answer_id INT,
+                url TEXT,
+                PRIMARY KEY (id),
+                FOREIGN KEY (answer_id) REFERENCES answers (id)
+                );
+              `)
+          .then(() => {
+            console.log("Table 'photos' has been created successfully.");
+          })
+          .catch((error) => {
+            console.error('Error creating table:', error);
+          });
+      })
+      .catch((error) => {
+        console.error('Error creating table:', error);
+      });
   })
   .catch((error) => {
     console.error('Error creating table:', error);
   });
 
-db.none(`CREATE TABLE IF NOT EXISTS answers
-(answers_id SERIAL,
-body TEXT,
-date TIMESTAMP,
-answerer_name TEXT,
-helpfulness INT,
-questions_id INT,
-PRIMARY KEY(answers_id),
-FOREIGN KEY (questions_id) REFERENCES questions (questions_id)
-);
-    `)
-  .then(() => {
-    console.log("Table 'answers' has been created successfully.");
-  })
-  .catch((error) => {
-    console.error('Error creating table:', error);
-  });
 
-db.none(`CREATE TABLE IF NOT EXISTS photos
-(photo_id SERIAL,
-url TEXT,
-answers_id INT,
-PRIMARY KEY (photo_id),
-FOREIGN KEY (answers_id) REFERENCES answers (answers_id)
-);
-    `)
-  .then(() => {
-    console.log("Table 'photos' has been created successfully.");
-  })
-  .catch((error) => {
-    console.error('Error creating table:', error);
-  });
+
