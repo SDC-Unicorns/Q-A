@@ -1,6 +1,4 @@
-import db from './database'
-//Bug in here that makes you have to run the file multiple times to make all of the tables
-//Making questions table too slow, (async) and answers isn't created yet
+import db from './database';
 
 db.none(`CREATE TABLE IF NOT EXISTS questions
 (id SERIAL,
