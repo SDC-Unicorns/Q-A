@@ -47,10 +47,7 @@ app.get('/qa/questions/', async (req: { query: { product_id: Number, page: Numbe
 });
 
 app.post('qa/questions/', async (req, res) => {
-  //check auth?? (should this be middleware?)
-  //write to DB
   let { body: questionBody, name: questionName, email: questionEmail, product_id: productId } = req.body;
-
   const questionQuery = `
   INSERT INTO questions (product_id, body, date_written, asker_name, asker_email, reported, helpful)
   VALUES ($1, $2, NOW(), $3, $4, false, 0)
@@ -65,9 +62,9 @@ try {
 
 })
 
-app.post('qa/answers/', async (req, res) => {
+app.post('qa/questions/:question_id/answers/', async (req, res) => {
   let { body: answerBody, name: username, email, photos } = req.body;
-  let questionId = req.query.question_id
+  let questionId = req.params.question_id
 
   const answerQuery: QueryParam = `
     INSERT INTO answers (question_id, body, date_written, answerer_name, answerer_email)
@@ -83,13 +80,33 @@ app.post('qa/answers/', async (req, res) => {
 
 })
 
+app.put('/questions/:id/helpful', async (req, res) => {
+  const questionId = req.params.id;
+  const query = `UPDATE questions SET helpful = helpful + 1 WHERE id = $1`;
+  await db.none(query, [questionId]);
+  res.send(`Question ${questionId} marked as helpful.`);
+});
 
-app.put('qa/questions', (req: putReq, res) => {
+app.put('/answers/:id/helpful', async (req, res) => {
+  const answerId = req.params.id;
+  const query = `UPDATE answers SET helpful = helpful + 1 WHERE id = $1`;
+  await db.none(query, [answerId]);
+  res.send(`Answer ${answerId} marked as helpful.`);
+});
 
-})
-app.put('qa/answers', (req: putReq, res) => {
+app.put('/questions/:id/report', async (req, res) => {
+  const questionId = req.params.id;
+  const query = `UPDATE questions SET reported = true WHERE id = $1`;
+  await db.none(query, [questionId]);
+  res.send(`Question ${questionId} has been reported.`);
+});
 
-})
+app.put('/answers/:id/report', async (req, res) => {
+  const answerId = req.params.id;
+  const query = `UPDATE answers SET reported = true WHERE id = $1`;
+  await db.none(query, [answerId]);
+  res.send(`Answer ${answerId} has been reported.`);
+});
 
 app.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`);
