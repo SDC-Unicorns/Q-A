@@ -85,21 +85,21 @@ app.put('/questions/:id/helpful', async (req, res) => {
   res.send(`Question ${questionId} marked as helpful.`);
 });
 
-app.put('/answers/:id/helpful', async (req, res) => {
+app.put('/qa/answers/:id/helpful', async (req, res) => {
   const answerId = req.params.id;
   const query = `UPDATE answers SET helpful = helpful + 1 WHERE id = $1`;
   await db.none(query, [answerId]);
   res.send(`Answer ${answerId} marked as helpful.`);
 });
 
-app.put('/questions/:id/report', async (req, res) => {
+app.put('/qa/questions/:id/report', async (req, res) => {
   const questionId = req.params.id;
   const query = `UPDATE questions SET reported = true WHERE id = $1`;
   await db.none(query, [questionId]);
   res.send(`Question ${questionId} has been reported.`);
 });
 
-app.put('/answers/:id/report', async (req, res) => {
+app.put('/qa/answers/:id/report', async (req, res) => {
   const answerId = req.params.id;
   const query = `UPDATE answers SET reported = true WHERE id = $1`;
   await db.none(query, [answerId]);
