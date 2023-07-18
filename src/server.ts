@@ -41,7 +41,7 @@ app.get('/qa/questions', async (req: { query: { product_id: Number, page: Number
   ORDER BY questions.id
   LIMIT $2 OFFSET $3
   `, [prod_id, count, offset]);
-  res.send('hello');
+  res.send(questions);
 });
 
 app.post('/qa/questions', async (req, res) => {

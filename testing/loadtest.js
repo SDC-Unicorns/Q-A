@@ -10,6 +10,6 @@ export let options = {
 };
 
 export default function () {
-  let res = http.get('localhost:9000/qa/questions/?product_id=40347');
+  let res = http.get('http://localhost:9000/qa/questions?product_id=40343&page=1&count=10');
   sleep(1);
 }
