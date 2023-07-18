@@ -4,23 +4,20 @@ import db from './database';
 let morgan = require('morgan');
 
 const app = express();
-const port: Number = 3000;
+const port: Number = 9000;
 app.use(express.static('../../fec-uranus/dist'));
 app.use(morgan('dev'));
 app.use(urlencoded());
 app.use(express.json());
 
-
 type putReq = { params: { id: Number } }
-type postReq = { params: {} }
 
-app.get('/qa/questions/', async (req: { query: { product_id: Number, page: Number, count: Number } }, res) => {
+app.get('/qa/questions', async (req: { query: { product_id: Number, page: Number, count: Number } }, res) => {
   let prod_id = req.query.product_id;
-  let page = req.query.page;
-  let count = req.query.count;
-
-  let questions = await db.query(`
-  EXPLAIN ANALYZE
+  let page = Number(req.query.page);
+  let count = Number(req.query.count);
+  const offset = (page - 1) * count;
+  let questions = await db.any(`
   SELECT JSON_BUILD_OBJECT
   ('question_id', questions.id,
   'asker_name', questions.asker_name,
@@ -39,14 +36,15 @@ app.get('/qa/questions/', async (req: { query: { product_id: Number, page: Numbe
       )
     )
   )
-  FROM questions LEFT JOIN answers ON questions.id = answers.question_id WHERE questions.product_id = ?
-  GROUP BY questions.id;
-  `, prod_id);
-  console.log(questions)
+  FROM questions LEFT JOIN answers ON questions.id = answers.question_id WHERE questions.product_id = $1
+  GROUP BY questions.id
+  ORDER BY questions.id
+  LIMIT $2 OFFSET $3
+  `, [prod_id, count, offset]);
   res.send(questions);
 });
 
-app.post('qa/questions/', async (req, res) => {
+app.post('/qa/questions', async (req, res) => {
   let { body: questionBody, name: questionName, email: questionEmail, product_id: productId } = req.body;
   const questionQuery = `
   INSERT INTO questions (product_id, body, date_written, asker_name, asker_email, reported, helpful)
@@ -62,7 +60,7 @@ try {
 
 })
 
-app.post('qa/questions/:question_id/answers/', async (req, res) => {
+app.post('/qa/questions/:question_id/answers', async (req, res) => {
   let { body: answerBody, name: username, email, photos } = req.body;
   let questionId = req.params.question_id
 
@@ -87,21 +85,21 @@ app.put('/questions/:id/helpful', async (req, res) => {
   res.send(`Question ${questionId} marked as helpful.`);
 });
 
-app.put('/answers/:id/helpful', async (req, res) => {
+app.put('/qa/answers/:id/helpful', async (req, res) => {
   const answerId = req.params.id;
   const query = `UPDATE answers SET helpful = helpful + 1 WHERE id = $1`;
   await db.none(query, [answerId]);
   res.send(`Answer ${answerId} marked as helpful.`);
 });
 
-app.put('/questions/:id/report', async (req, res) => {
+app.put('/qa/questions/:id/report', async (req, res) => {
   const questionId = req.params.id;
   const query = `UPDATE questions SET reported = true WHERE id = $1`;
   await db.none(query, [questionId]);
   res.send(`Question ${questionId} has been reported.`);
 });
 
-app.put('/answers/:id/report', async (req, res) => {
+app.put('/qa/answers/:id/report', async (req, res) => {
   const answerId = req.params.id;
   const query = `UPDATE answers SET reported = true WHERE id = $1`;
   await db.none(query, [answerId]);
