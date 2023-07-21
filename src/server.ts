@@ -13,10 +13,6 @@ app.use(express.json());
 type putReq = { params: { id: Number } }
 
 app.get('/qa/questions', async (req: { query: { product_id: Number, page: Number, count: Number } }, res) => {
-  let prod_id = req.query.product_id;
-  let page = Number(req.query.page);
-  let count = Number(req.query.count);
-  const offset = (page - 1) * count;
   try {
   let questions = await db.any(`
   SELECT JSON_BUILD_OBJECT
@@ -41,7 +37,7 @@ app.get('/qa/questions', async (req: { query: { product_id: Number, page: Number
   GROUP BY questions.id
   ORDER BY questions.id
   LIMIT $2 OFFSET $3
-  `, [prod_id, count, offset]);
+  `, [req.query.product_id, req.query.count, (Number(req.query.page)  -1)* Number(req.query.count)]);
   res.send(questions);
     } catch (err:any) {
       res.send(err).status(400)
