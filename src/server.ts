@@ -17,6 +17,7 @@ app.get('/qa/questions', async (req: { query: { product_id: Number, page: Number
   let page = Number(req.query.page);
   let count = Number(req.query.count);
   const offset = (page - 1) * count;
+  try {
   let questions = await db.any(`
   SELECT JSON_BUILD_OBJECT
   ('question_id', questions.id,
@@ -42,6 +43,9 @@ app.get('/qa/questions', async (req: { query: { product_id: Number, page: Number
   LIMIT $2 OFFSET $3
   `, [prod_id, count, offset]);
   res.send(questions);
+    } catch (err:any) {
+      res.send(err).status(400)
+    }
 });
 
 app.post('/qa/questions', async (req, res) => {
@@ -54,8 +58,8 @@ app.post('/qa/questions', async (req, res) => {
 try {
   await db.one(questionQuery, [productId, questionBody, questionName, questionEmail]);
   res.send('Question created successfully');
-} catch (err) {
-  res.send('Error writing new question')
+} catch (err:any) {
+  res.send('Error writing new question').status(400)
 }
 
 })
@@ -73,37 +77,53 @@ app.post('/qa/questions/:question_id/answers', async (req, res) => {
     let answerId = await db.one(answerQuery, [questionId, answerBody, username, email]);
     res.send('Successfully written new Answer');
   } catch (err: any) {
-    res.send('Error writing new answer');
+    res.send('Error writing new answer').status(400);
   }
 
 })
 
 app.put('/questions/:id/helpful', async (req, res) => {
+  try {
   const questionId = req.params.id;
   const query = `UPDATE questions SET helpful = helpful + 1 WHERE id = $1`;
   await db.none(query, [questionId]);
   res.send(`Question ${questionId} marked as helpful.`);
+  } catch (err:any) {
+    res.send(err).status(400);
+  }
 });
 
 app.put('/qa/answers/:id/helpful', async (req, res) => {
+  try {
   const answerId = req.params.id;
   const query = `UPDATE answers SET helpful = helpful + 1 WHERE id = $1`;
   await db.none(query, [answerId]);
   res.send(`Answer ${answerId} marked as helpful.`);
+  } catch (err: any) {
+    res.send(err).status(400);
+  }
 });
 
 app.put('/qa/questions/:id/report', async (req, res) => {
+  try {
   const questionId = req.params.id;
   const query = `UPDATE questions SET reported = true WHERE id = $1`;
   await db.none(query, [questionId]);
   res.send(`Question ${questionId} has been reported.`);
+  } catch (err: any) {
+    res.send(err).status(400);
+  }
 });
 
 app.put('/qa/answers/:id/report', async (req, res) => {
+  try {
   const answerId = req.params.id;
   const query = `UPDATE answers SET reported = true WHERE id = $1`;
   await db.none(query, [answerId]);
   res.send(`Answer ${answerId} has been reported.`);
+  } catch (err: any) {
+    res.send(err).status(400);
+  }
 });
 
 app.listen(port, () => {
